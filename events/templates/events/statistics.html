@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика – Event{% endblock %}
+
+{% block content %}
+  <h1>Статистика</h1>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card stat-card"><div class="card-body">
+        <div class="text-muted">Активных мероприятий</div>
+        <div class="stat-value">{{ events_count }}</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card stat-card"><div class="card-body">
+        <div class="text-muted">Минимальная цена</div>
+        <div class="stat-value">{{ prices.min_price|default:"0" }} руб.</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card stat-card"><div class="card-body">
+        <div class="text-muted">Средняя цена</div>
+        <div class="stat-value">{{ prices.avg_price|floatformat:0 }} руб.</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card stat-card"><div class="card-body">
+        <div class="text-muted">Максимальная цена</div>
+        <div class="stat-value">{{ prices.max_price|default:"0" }} руб.</div>
+      </div></div>
+    </div>
+  </div>
+
+  <h2 class="h4">Мероприятия по площадкам</h2>
+  <table class="table table-sm mb-4">
+    <thead><tr><th>Площадка</th><th>Активных мероприятий</th></tr></thead>
+    <tbody>
+      {% for row in by_venue %}
+        <tr><td>{{ row.venue_name }}</td><td>{{ row.events_count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">Данные отсутствуют.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="h4">Заполненность мероприятий</h2>
+  <table class="table table-sm mb-4">
+    <thead>
+      <tr><th>Мероприятие</th><th>Участников</th><th>Мест</th><th>Свободно</th></tr>
+    </thead>
+    <tbody>
+      {% for row in occupancy %}
+        <tr>
+          <td>{{ row.title }}</td>
+          <td>{{ row.participants_count }}</td>
+          <td>{{ row.capacity }}</td>
+          <td>{{ row.free_seats }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">Данные отсутствуют.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="h4">Организаторы</h2>
+  <table class="table table-sm mb-4">
+    <thead><tr><th>Организатор</th><th>Всего мероприятий</th><th>Отменено</th></tr></thead>
+    <tbody>
+      {% for row in by_organizer %}
+        <tr>
+          <td>{{ row.organizer_name }}</td>
+          <td>{{ row.events_count }}</td>
+          <td>{{ row.cancelled_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">Данные отсутствуют.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="h4">Популярные площадки (больше одного мероприятия)</h2>
+  <ul class="list-group">
+    {% for row in popular_venues %}
+      <li class="list-group-item">{{ row.venue_name }} – {{ row.events_count }}</li>
+    {% empty %}
+      <li class="list-group-item">Таких площадок пока нет.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

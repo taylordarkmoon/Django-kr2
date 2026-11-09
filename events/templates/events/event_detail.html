@@ -12,17 +12,18 @@
         <p class="card-text"><strong>Дата:</strong> {{ event.event_date }}</p>
         <p class="card-text">
           <strong>Площадка:</strong>
-          <a href="{% url 'venues:detail' event.venue.id %}">{{ event.venue.name }}</a>
+          <a href="{% url 'venues:detail' event.venue_id %}">{{ event.venue_name }}</a>
         </p>
         <p class="card-text">
-          <strong>Организатор:</strong> {{ event.organizer.name }}
+          <strong>Организатор:</strong> {{ event.organizer_name }}
+          ({{ event.organizer_email }})
         </p>
         <p class="card-text">
-          <strong>Билет:</strong> {{ event.get_price_text }}
+          <strong>Билет:</strong> {% include "events/includes/event_price.html" %}
         </p>
         <p class="card-text">
           <strong>Участники:</strong>
-          {{ participants|length }} из {{ event.venue.capacity }}
+          {{ participants|length }} из {{ event.venue_capacity }}
         </p>
         <p class="card-text">
           <strong>Статус:</strong>

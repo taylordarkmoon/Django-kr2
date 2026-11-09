@@ -4,20 +4,38 @@
 
 {% block content %}
   <h1>Мероприятия</h1>
-  <p class="text-muted">Всего мероприятий: {{ events|length }}</p>
 
-  <ul class="list-group">
-    {% for event in events %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
+  <form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+      <label for="max_price" class="form-label">Билет не дороже, руб.</label>
+      <input type="number" min="0" id="max_price" name="max_price"
+             value="{{ max_price }}" class="form-control">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Показать</button>
+      <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+  </form>
+
+  <p class="text-muted">Активных мероприятий: {{ events|length }}</p>
+
+  {% for event in events %}
+    <article class="card event-card mb-3">
+      <div class="card-body">
+        <h2 class="card-title h5">
           <a href="{% url 'events:detail' event.id %}">{{ event.title }}</a>
-          – {{ event.event_date }}, {{ event.venue.name }},
-          билет: {{ event.get_price_text }}
-        </span>
-        {% include "events/includes/event_status.html" %}
-      </li>
-    {% empty %}
-      <li class="list-group-item">Мероприятия не найдены.</li>
-    {% endfor %}
-  </ul>
+        </h2>
+        <p class="card-text mb-1">
+          {{ event.event_date }} · {{ event.venue_name }} ·
+          организатор: {{ event.organizer_name }}
+        </p>
+        <p class="card-text">
+          Билет: {% include "events/includes/event_price.html" %} ·
+          участников: {{ event.participants_count }}
+        </p>
+      </div>
+    </article>
+  {% empty %}
+    <p>Мероприятия не найдены.</p>
+  {% endfor %}
 {% endblock %}

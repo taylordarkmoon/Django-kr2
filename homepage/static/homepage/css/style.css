@@ -61,3 +61,12 @@ main {
   border-top: 1px solid #e9d5de;
   color: #6c757d;
 }
+
+.stat-card {
+  border-top: 4px solid #d6336c;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}

@@ -7,7 +7,8 @@ Event – приложение для организации мероприят�
 мероприятия и видят стоимость билета.
 
 Консольная версия приложения (ПР1–ПР3) дополнена веб-интерфейсом на Django (ПР5),
-который в ПР6 переведён на систему шаблонов Django.
+который в ПР6 переведён на систему шаблонов Django, а в ПР7 получает данные
+из базы SQLite с помощью SQL-запросов.
 
 Приложение позволяет:
 
@@ -27,7 +28,8 @@ Event – приложение для организации мероприят�
 * HTML – разметка веб-страниц;
 * CSS (собственный `style.css`) и Bootstrap 5.3 – оформление страниц;
 * JavaScript (`main.js`) – текущий год в подвале, подсветка пункта меню;
-* JSON – хранение данных;
+* SQLite и SQL (модуль `sqlite3`) – хранение и выборка данных;
+* JSON – исходные данные, перенесённые в базу;
 * pytest – автоматизированные тесты;
 * flake8 – проверка качества кода.
 
@@ -72,23 +74,60 @@ Event – приложение для организации мероприят�
 
 ## Страницы веб-интерфейса
 
-| URL | Имя маршрута | View-функция | Шаблон |
-|-----|--------------|--------------|--------|
-| `/` | `homepage:index` | `index()` | `homepage/index.html` |
-| `/venues/` | `venues:list` | `venues()` | `venues/venue_list.html` |
-| `/venues/<int:venue_id>/` | `venues:detail` | `venue_detail()` | `venues/venue_detail.html` |
-| `/events/` | `events:list` | `events()` | `events/event_list.html` |
-| `/events/<int:event_id>/` | `events:detail` | `event_detail()` | `events/event_detail.html` |
+| URL | Имя маршрута | Что показывает | SQL |
+|-----|--------------|----------------|-----|
+| `/` | `homepage:index` | ближайшие мероприятия | `ORDER BY` + `LIMIT` |
+| `/venues/` | `venues:list` | площадки, фильтр `?min_capacity=` | `SELECT`, `WHERE` |
+| `/venues/available/` | `venues:available` | свободные площадки на дату `?date=` | подзапрос `NOT IN` |
+| `/venues/<int:venue_id>/` | `venues:detail` | площадка и её мероприятия | `WHERE id = ?` |
+| `/events/` | `events:list` | активные мероприятия, фильтр `?max_price=` | `JOIN`, `COUNT`, `GROUP BY` |
+| `/events/<int:event_id>/` | `events:detail` | мероприятие, площадка, организатор, участники | `JOIN` |
+| `/events/statistics/` | `events:statistics` | статистика | `COUNT`, `MIN/AVG/MAX`, `GROUP BY`, `HAVING` |
 
 Если площадка или мероприятие не найдены, сообщение выводится в шаблоне
 через `{% if %} / {% else %}`, а `render()` возвращает ответ со статусом 404.
 Для адресов без маршрута работает `handler404` →
 `homepage.views.page_not_found()` → шаблон `homepage/page_not_found.html`.
 
+## База данных SQLite (ПР7)
+
+Файл базы: `data/event.sqlite`. Таблицы создаются командами из
+`sql/schema.sql`, данные переносятся из JSON скриптом `db/import_json.py`.
+
+| Таблица | Поля (тип) | Ключи |
+|---------|-----------|-------|
+| `venues` | `id` INTEGER, `name` TEXT, `address` TEXT, `capacity` INTEGER | PK `id` |
+| `users` | `id` INTEGER, `name` TEXT, `email` TEXT (UNIQUE) | PK `id` |
+| `events` | `id` INTEGER, `title` TEXT, `venue_id` INTEGER, `event_date` TEXT (ГГГГ-ММ-ДД), `price` INTEGER, `organizer_id` INTEGER, `is_cancelled` INTEGER (0/1) | PK `id`; FK `venue_id → venues.id`, `organizer_id → users.id` |
+| `registrations` | `id` INTEGER, `event_id` INTEGER, `user_id` INTEGER | PK `id`; FK `event_id → events.id`, `user_id → users.id`; UNIQUE (`event_id`, `user_id`) |
+
+Связи: на площадке проходит много мероприятий; организатор создаёт много
+мероприятий; на мероприятие записывается много участников.
+
+* `db/database.py` – `get_connection()` (включает `PRAGMA foreign_keys = ON`
+  и `row_factory = sqlite3.Row`), `create_schema()`, помощники `fetch_all()`
+  и `fetch_one()` для представлений;
+* `db/import_json.py` – создание таблиц и перенос данных из JSON
+  одной транзакцией (`commit` / `rollback`);
+* `sql/queries.sql` – 14 проверенных запросов: списки (`ORDER BY`, `LIMIT`),
+  фильтрация (`WHERE`, подзапрос `NOT IN`), соединения (`JOIN`,
+  `LEFT JOIN`), агрегатные функции (`COUNT`, `MIN`, `AVG`, `MAX`, `SUM`),
+  группировка (`GROUP BY`) и фильтрация групп (`HAVING`).
+
+Значения от пользователя (дата, вместимость, цена, id) передаются в запросы
+только параметрами `?`. Django ORM пока не используется – запросы
+выполняются модулем `sqlite3`.
+
+Создание и заполнение базы (из корня проекта):
+
+```text
+python -m db.import_json
+```
+
 ## Шаблоны Django (ПР6)
 
-HTML больше не формируется в Python: view-функции загружают данные
-средствами ПР3, собирают словарь `context` и вызывают
+HTML больше не формируется в Python: view-функции получают данные
+(с ПР7 – из SQLite), собирают словарь `context` и вызывают
 `render(request, "шаблон.html", context)`. Функция `page()` из ПР5 удалена.
 
 * **Базовый шаблон** `templates/base.html` – HTML-каркас, Bootstrap,
@@ -136,9 +175,9 @@ HTML больше не формируется в Python: view-функции з�
 
 При загрузке данные JSON превращаются в объекты `Venue`, `User`, `Event`,
 `Registration`; связи восстанавливаются по `venue_id`, `organizer_id`,
-`event_id`, `user_id`. Пути к файлам заданы в `storage.py`, поэтому данные
-читаются одинаково и консольной, и веб-версией. Django ORM и база данных
-проекта пока не используются, формы ещё не реализованы.
+`event_id`, `user_id`. JSON-хранилище использует консольная версия
+(`main.py`), а веб-версия с ПР7 читает данные из `data/event.sqlite`,
+куда они перенесены скриптом `db/import_json.py`. Формы ещё не реализованы.
 
 ## Структура проекта
 
@@ -151,6 +190,12 @@ event_service/
 ├── main.py              # консольная версия (ПР3)
 ├── storage.py
 ├── utils.py
+├── db/                  # работа с SQLite (ПР7)
+│   ├── database.py
+│   └── import_json.py
+├── sql/
+│   ├── schema.sql       # создание таблиц
+│   └── queries.sql      # SQL-запросы проекта
 ├── templates/           # шаблоны уровня проекта
 │   ├── base.html
 │   └── includes/
@@ -183,7 +228,7 @@ event_service/
 │   ├── urls.py
 │   └── views.py
 ├── models/              # классы предметной области (ПР3)
-├── data/                # JSON-хранилище
+├── data/                # JSON-файлы и база event.sqlite
 └── tests/
 ```
 
@@ -194,6 +239,7 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
+python -m db.import_json
 python manage.py runserver
 ```
 
@@ -217,13 +263,17 @@ flake8 . --extend-exclude=venv
   `events`, маршрутизация, view-функции, страница 404;
 * ПР6 – шаблоны Django: `base.html`, наследование, блоки, `include`,
   контекст, циклы и условия, именованные URL с пространствами имён,
-  фильтры, собственные CSS, JavaScript и логотип.
+  фильтры, собственные CSS, JavaScript и логотип;
+* ПР7 – база SQLite `data/event.sqlite`: схема `sql/schema.sql`, перенос
+  данных из JSON, 14 SQL-запросов в `sql/queries.sql`; страницы получают
+  данные SQL-запросами; добавлены поиск свободных площадок на дату,
+  фильтры по вместимости и цене, страница статистики.
 
-Данные пока хранятся в JSON; Django ORM, база данных и формы не используются.
+Django ORM и формы пока не используются.
 
 Планируется:
 
-* перенос сущностей в Django ORM и подключение базы данных PostgreSQL;
+* подключение базы к Django через Django ORM (модели и миграции), PostgreSQL;
 * формы создания мероприятий и записи участников;
 * регистрация, вход и личный кабинет пользователя;
 * REST API, Docker, CI/CD.

@@ -8,11 +8,26 @@
     Сервис мероприятий: организаторы создают мероприятия и выбирают
     площадки, участники записываются и видят стоимость билета.
   </p>
-  <p>Основные разделы:</p>
+
+  <h2 class="h4">Ближайшие мероприятия</h2>
+  <ul class="list-group mb-4">
+    {% for event in upcoming_events %}
+      <li class="list-group-item">
+        <a href="{% url 'events:detail' event.id %}">{{ event.title }}</a>
+        – {{ event.event_date }}
+      </li>
+    {% empty %}
+      <li class="list-group-item">Запланированных мероприятий нет.</li>
+    {% endfor %}
+  </ul>
+
   <a href="{% url 'events:list' %}" class="btn btn-primary me-2">
     Мероприятия
   </a>
-  <a href="{% url 'venues:list' %}" class="btn btn-secondary">
+  <a href="{% url 'venues:list' %}" class="btn btn-secondary me-2">
     Площадки
+  </a>
+  <a href="{% url 'events:statistics' %}" class="btn btn-outline-secondary">
+    Статистика
   </a>
 {% endblock %}

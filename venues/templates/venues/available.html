@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Свободные площадки – Event{% endblock %}
+
+{% block content %}
+  <h1>Свободные площадки</h1>
+
+  <form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+      <label for="date" class="form-label">Дата мероприятия</label>
+      <input type="date" id="date" name="date" value="{{ event_date }}"
+             class="form-control" required>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Найти</button>
+    </div>
+  </form>
+
+  {% if event_date %}
+    <h2 class="h4">Свободно {{ event_date }}: {{ venues|length }}</h2>
+    {% for venue in venues %}
+      {% include "venues/includes/venue_card.html" %}
+    {% empty %}
+      <p>На выбранную дату свободных площадок нет.</p>
+    {% endfor %}
+  {% endif %}
+
+  <a href="{% url 'venues:list' %}" class="btn btn-outline-secondary">
+    ← ко всем площадкам
+  </a>
+{% endblock %}
