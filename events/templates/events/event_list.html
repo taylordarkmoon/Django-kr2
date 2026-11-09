@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Мероприятия – Event{% endblock %}
+
+{% block content %}
+  <h1>Мероприятия</h1>
+  <p class="text-muted">Всего мероприятий: {{ events|length }}</p>
+
+  <ul class="list-group">
+    {% for event in events %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          <a href="{% url 'events:detail' event.id %}">{{ event.title }}</a>
+          – {{ event.event_date }}, {{ event.venue.name }},
+          билет: {{ event.get_price_text }}
+        </span>
+        {% include "events/includes/event_status.html" %}
+      </li>
+    {% empty %}
+      <li class="list-group-item">Мероприятия не найдены.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

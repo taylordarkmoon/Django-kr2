@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Главная – Event{% endblock %}
+
+{% block content %}
+  <h1 class="display-4">Event</h1>
+  <p class="lead">
+    Сервис мероприятий: организаторы создают мероприятия и выбирают
+    площадки, участники записываются и видят стоимость билета.
+  </p>
+  <p>Основные разделы:</p>
+  <a href="{% url 'events:list' %}" class="btn btn-primary me-2">
+    Мероприятия
+  </a>
+  <a href="{% url 'venues:list' %}" class="btn btn-secondary">
+    Площадки
+  </a>
+{% endblock %}

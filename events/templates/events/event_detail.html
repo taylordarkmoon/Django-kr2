@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if event %}{{ event.title }} – Event{% else %}Мероприятие не найдено – Event{% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if event %}
+    <div class="card event-card mb-3">
+      <div class="card-body">
+        <h1 class="card-title h3">{{ event.title }}</h1>
+        <p class="card-text"><strong>Дата:</strong> {{ event.event_date }}</p>
+        <p class="card-text">
+          <strong>Площадка:</strong>
+          <a href="{% url 'venues:detail' event.venue.id %}">{{ event.venue.name }}</a>
+        </p>
+        <p class="card-text">
+          <strong>Организатор:</strong> {{ event.organizer.name }}
+        </p>
+        <p class="card-text">
+          <strong>Билет:</strong> {{ event.get_price_text }}
+        </p>
+        <p class="card-text">
+          <strong>Участники:</strong>
+          {{ participants|length }} из {{ event.venue.capacity }}
+        </p>
+        <p class="card-text">
+          <strong>Статус:</strong>
+          {% include "events/includes/event_status.html" %}
+        </p>
+      </div>
+    </div>
+
+    <h2 class="h4">Список участников</h2>
+    <ul class="list-group mb-3">
+      {% for user in participants %}
+        <li class="list-group-item">{{ forloop.counter }}. {{ user.name }}</li>
+      {% empty %}
+        <li class="list-group-item">Пока никто не записался.</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <h1 class="text-danger">Мероприятие не найдено</h1>
+    <p>Мероприятие с указанным идентификатором отсутствует.</p>
+  {% endif %}
+
+  <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">
+    ← к списку мероприятий
+  </a>
+{% endblock %}

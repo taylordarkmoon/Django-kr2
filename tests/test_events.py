@@ -4,6 +4,7 @@ from models.events import (
     create_event,
     find_event_by_id,
     get_event_status,
+    get_venue_events,
     is_venue_available,
 )
 
@@ -59,3 +60,14 @@ def test_find_event_by_id():
 def test_get_event_status():
     assert get_event_status(True).startswith("Площадка свободна")
     assert get_event_status(False) == "Площадка уже занята"
+
+
+def test_get_venue_events():
+    venue, user = make_objects()
+    other = Venue(2, "Зал", "ул. Тверская, 12", 100)
+    events = []
+    first = create_event(events, "Митап", venue, "2026-11-20", 0, user)
+    create_event(events, "Лекция", other, "2026-11-20", 0, user)
+    cancelled = create_event(events, "Турнир", venue, "2026-11-21", 0, user)
+    cancelled.cancel()
+    assert get_venue_events(events, venue) == [first]

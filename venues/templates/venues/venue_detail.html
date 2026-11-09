@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if venue %}{{ venue.name }} – Event{% else %}Площадка не найдена – Event{% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if venue %}
+    <div class="card venue-card mb-3">
+      <div class="card-body">
+        <h1 class="card-title h3">{{ venue.name }}</h1>
+        <p class="card-text"><strong>Адрес:</strong> {{ venue.address }}</p>
+        <p class="card-text">
+          <strong>Вместимость:</strong> {{ venue.capacity }} чел.
+        </p>
+        <p class="card-text">
+          Сегодня площадка
+          {% if is_free_today %}
+            <span class="badge bg-success">свободна</span>
+          {% else %}
+            <span class="badge bg-danger">занята</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <h2 class="h4">Мероприятия на площадке ({{ venue_events|length }})</h2>
+    <ul class="list-group mb-3">
+      {% for event in venue_events %}
+        <li class="list-group-item">
+          <a href="{% url 'events:detail' event.id %}">{{ event.title }}</a>
+          – {{ event.event_date }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">Мероприятий нет.</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <h1 class="text-danger">Площадка не найдена</h1>
+    <p>Площадка с указанным идентификатором отсутствует.</p>
+  {% endif %}
+
+  <a href="{% url 'venues:list' %}" class="btn btn-outline-secondary">
+    ← к списку площадок
+  </a>
+{% endblock %}

@@ -1,0 +1,63 @@
+/* Собственные стили проекта Event */
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #faf7f9;
+}
+
+main {
+  flex: 1;
+}
+
+.site-header {
+  background-color: #ffffff;
+  border-bottom: 3px solid #d6336c;
+  margin-bottom: 1.5rem;
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.event-logo {
+  width: 150px;
+  height: auto;
+  margin: 0.75rem 0;
+}
+
+.site-nav .nav-link {
+  color: #212529;
+  font-weight: 500;
+}
+
+.site-nav .nav-link:hover {
+  color: #d6336c;
+}
+
+.venue-card,
+.event-card {
+  border: 1px solid #e9d5de;
+  border-left: 4px solid #d6336c;
+  border-radius: 8px;
+}
+
+.event-status {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.event-status-cancelled {
+  text-decoration: line-through;
+}
+
+.site-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9d5de;
+  color: #6c757d;
+}

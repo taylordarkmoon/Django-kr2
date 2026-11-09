@@ -6,7 +6,8 @@ Event – приложение для организации мероприят�
 мероприятия и выбирают для них площадки, участники записываются на
 мероприятия и видят стоимость билета.
 
-Консольная версия приложения (ПР1–ПР3) дополнена веб-интерфейсом на Django (ПР5).
+Консольная версия приложения (ПР1–ПР3) дополнена веб-интерфейсом на Django (ПР5),
+который в ПР6 переведён на систему шаблонов Django.
 
 Приложение позволяет:
 
@@ -22,8 +23,11 @@ Event – приложение для организации мероприят�
 
 * Python 3;
 * Django 5.2 – веб-фреймворк;
+* Django Template Language (DTL) – шаблоны страниц;
 * HTML – разметка веб-страниц;
-* CSS и Bootstrap 5.3 – оформление страниц;
+* CSS (собственный `style.css`) и Bootstrap 5.3 – оформление страниц;
+* JavaScript (`main.js`) – текущий год в подвале, подсветка пункта меню;
+* JSON – хранение данных;
 * pytest – автоматизированные тесты;
 * flake8 – проверка качества кода.
 
@@ -68,17 +72,43 @@ Event – приложение для организации мероприят�
 
 ## Страницы веб-интерфейса
 
-| URL | View-функция | Назначение |
-|-----|--------------|------------|
-| `/` | `homepage.views.index()` | главная страница: описание и навигация |
-| `/venues/` | `venues.views.venues()` | список площадок из `data/venues.json` |
-| `/venues/<int:venue_id>/` | `venues.views.venue_detail()` | карточка площадки, занятость на сегодня, её мероприятия |
-| `/events/` | `events.views.events()` | список мероприятий с ценой и статусом |
-| `/events/<int:event_id>/` | `events.views.event_detail()` | карточка мероприятия, площадка, организатор, участники |
+| URL | Имя маршрута | View-функция | Шаблон |
+|-----|--------------|--------------|--------|
+| `/` | `homepage:index` | `index()` | `homepage/index.html` |
+| `/venues/` | `venues:list` | `venues()` | `venues/venue_list.html` |
+| `/venues/<int:venue_id>/` | `venues:detail` | `venue_detail()` | `venues/venue_detail.html` |
+| `/events/` | `events:list` | `events()` | `events/event_list.html` |
+| `/events/<int:event_id>/` | `events:detail` | `event_detail()` | `events/event_detail.html` |
 
-Если площадка или мероприятие с указанным идентификатором не найдены,
-страница возвращает код 404. Для адресов без маршрута работает
-собственный обработчик `handler404` → `homepage.views.page_not_found()`.
+Если площадка или мероприятие не найдены, сообщение выводится в шаблоне
+через `{% if %} / {% else %}`, а `render()` возвращает ответ со статусом 404.
+Для адресов без маршрута работает `handler404` →
+`homepage.views.page_not_found()` → шаблон `homepage/page_not_found.html`.
+
+## Шаблоны Django (ПР6)
+
+HTML больше не формируется в Python: view-функции загружают данные
+средствами ПР3, собирают словарь `context` и вызывают
+`render(request, "шаблон.html", context)`. Функция `page()` из ПР5 удалена.
+
+* **Базовый шаблон** `templates/base.html` – HTML-каркас, Bootstrap,
+  собственный CSS, логотип, навигация, подвал, JavaScript; блоки
+  `{% block title %}` и `{% block content %}`.
+* **Наследование** – все страницы начинаются с `{% extends "base.html" %}`.
+* **Включаемые шаблоны** (`{% include %}`):
+  `templates/includes/navigation.html` – меню сайта;
+  `venues/includes/venue_card.html` – карточка площадки;
+  `events/includes/event_status.html` – статус мероприятия
+  (используется и в списке, и на странице мероприятия).
+* **Циклы и условия** – `{% for ... %}{% empty %}` для списков,
+  `{% if event.is_cancelled %}`, `{% if is_free_today %}`, `{% if venue %}`.
+* **Именованные URL и пространства имён** – `app_name` в `urls.py`
+  приложений, ссылки вида `{% url 'events:detail' event.id %}`.
+* **Фильтры** – `{{ venues|length }}`, `{{ participants|length }}`,
+  `{{ venue.name|default:"Без названия" }}`. Дата мероприятия хранится
+  строкой и выводится без преобразования.
+* **Статические файлы** – `{% load static %}`, каталог
+  `homepage/static/homepage/`: `css/style.css`, `js/main.js`, `img/logo.png`.
 
 ## Основные операции
 
@@ -87,7 +117,8 @@ Event – приложение для организации мероприят�
 * просмотр площадок и мероприятий;
 * просмотр карточки площадки и мероприятия;
 * проверка, свободна ли площадка на текущую дату (`is_venue_available()`);
-* вывод стоимости билета (`Event.get_price_text()`) и участников (`get_participants()`).
+* вывод стоимости билета (`Event.get_price_text()`) и участников (`get_participants()`);
+* список мероприятий площадки (`get_venue_events()`, добавлена в ПР6).
 
 ### Отложено до следующих работ
 
@@ -106,7 +137,8 @@ Event – приложение для организации мероприят�
 При загрузке данные JSON превращаются в объекты `Venue`, `User`, `Event`,
 `Registration`; связи восстанавливаются по `venue_id`, `organizer_id`,
 `event_id`, `user_id`. Пути к файлам заданы в `storage.py`, поэтому данные
-читаются одинаково и консольной, и веб-версией.
+читаются одинаково и консольной, и веб-версией. Django ORM и база данных
+проекта пока не используются, формы ещё не реализованы.
 
 ## Структура проекта
 
@@ -119,20 +151,39 @@ event_service/
 ├── main.py              # консольная версия (ПР3)
 ├── storage.py
 ├── utils.py
+├── templates/           # шаблоны уровня проекта
+│   ├── base.html
+│   └── includes/
+│       └── navigation.html
 ├── event_site/          # пакет настроек Django-проекта
 │   ├── settings.py
+│   └── urls.py
+├── homepage/
+│   ├── static/homepage/
+│   │   ├── css/style.css
+│   │   ├── js/main.js
+│   │   └── img/logo.png
+│   ├── templates/homepage/
+│   │   ├── index.html
+│   │   └── page_not_found.html
 │   ├── urls.py
-│   ├── asgi.py
-│   └── wsgi.py
-├── homepage/            # главная страница, page(), обработчик 404
-├── venues/              # страницы площадок
-├── events/              # страницы мероприятий
+│   └── views.py
+├── venues/
+│   ├── templates/venues/
+│   │   ├── venue_list.html
+│   │   ├── venue_detail.html
+│   │   └── includes/venue_card.html
+│   ├── urls.py
+│   └── views.py
+├── events/
+│   ├── templates/events/
+│   │   ├── event_list.html
+│   │   ├── event_detail.html
+│   │   └── includes/event_status.html
+│   ├── urls.py
+│   └── views.py
 ├── models/              # классы предметной области (ПР3)
-│   ├── venues.py
-│   ├── users.py
-│   ├── events.py
-│   └── registrations.py
-├── data/
+├── data/                # JSON-хранилище
 └── tests/
 ```
 
@@ -153,23 +204,25 @@ python manage.py runserver
 ## Тестирование и качество кода
 
 ```text
+python manage.py check
 pytest -v
 flake8 . --extend-exclude=venv
 ```
 
 ## Текущее состояние и план развития
 
-Реализовано (ПР5):
+Реализовано:
 
-* Django-проект `event_site` и три приложения: `homepage`, `venues`, `events`;
-* двухуровневая маршрутизация URL и динамические адреса `<int:...>`;
-* view-функции и страницы на Bootstrap 5.3 с общим каркасом `page()`;
-* собственная страница 404;
-* отображение данных предметной области через классы и функции ПР3.
+* ПР5 – Django-проект `event_site`, приложения `homepage`, `venues`,
+  `events`, маршрутизация, view-функции, страница 404;
+* ПР6 – шаблоны Django: `base.html`, наследование, блоки, `include`,
+  контекст, циклы и условия, именованные URL с пространствами имён,
+  фильтры, собственные CSS, JavaScript и логотип.
+
+Данные пока хранятся в JSON; Django ORM, база данных и формы не используются.
 
 Планируется:
 
-* шаблоны Django (`templates/`) вместо функции `page()`;
 * перенос сущностей в Django ORM и подключение базы данных PostgreSQL;
 * формы создания мероприятий и записи участников;
 * регистрация, вход и личный кабинет пользователя;

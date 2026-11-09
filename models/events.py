@@ -65,6 +65,14 @@ def is_venue_available(
     return True
 
 
+def get_venue_events(events: List[Event], venue: Venue) -> List[Event]:
+    """Вернуть активные мероприятия, проходящие на площадке."""
+    return [
+        event for event in events
+        if event.venue.id == venue.id and not event.is_cancelled
+    ]
+
+
 def create_event(
     events: List[Event],
     title: str,
