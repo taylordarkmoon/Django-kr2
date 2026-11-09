@@ -1,0 +1,6 @@
+[
+    {"id": 1, "title": "Митап Python-разработчиков", "venue_id": 1, "event_date": "2026-11-20", "price": 0, "organizer_id": 1, "is_cancelled": false},
+    {"id": 2, "title": "Мастер-класс по дизайну интерфейсов", "venue_id": 2, "event_date": "2026-11-27", "price": 1500, "organizer_id": 1, "is_cancelled": false},
+    {"id": 3, "title": "Настольные игры: турнир", "venue_id": 3, "event_date": "2026-12-05", "price": 300, "organizer_id": 2, "is_cancelled": true},
+    {"id": 4, "title": "Новогодний концерт", "venue_id": 1, "event_date": "2026-12-26", "price": 800, "organizer_id": 2, "is_cancelled": false}
+]
